@@ -1,0 +1,455 @@
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <title>CPU Game</title>
+        <style>
+            #board{
+                border: 2px solid #000000;
+                image-rendering: auto;
+                image-rendering: crisp-edges;
+                image-rendering: -moz-crisp-edges;
+                width: 960px;
+                height: 540px;
+            }
+        </style>
+    </head>
+    <body>
+        <img id='boardImage' src='ProcessadorGameTabuleiro.png' alt='tabuleiro' style='display:none'>
+        <div>
+            <canvas id='board' width='960' height='540'></canvas>
+        </div>    
+        <div>
+            <button onclick='addPiece()'>+</button>
+            <button onclick='removePiece()'>-</button>
+        </div>   
+        <script>
+            const canvas = document.getElementById('board')
+            const context = canvas.getContext('2d')
+            const canvasBorder = canvas.getBoundingClientRect() //Canvas border
+            const offsetX = canvasBorder.left
+            const offsetY = canvasBorder.top
+            const WIDTH = canvas.width
+            const HEIGHT = canvas.height            
+            
+            //Game factory
+            function creatGame() {
+                const state = {
+                    players: { },
+                    piecesInPlay: [],                    
+                    tiles: []
+                }
+                
+                let piecesCount = 0;
+
+                function addPlayer(command) {
+                    const playerId = command.playerId
+                    const xStart = command.xStart
+                    const yStart = command.yStart
+                    const playerColor = command.playerColor
+                    const currentTile = command.currentTile                  
+                    let isLocked = command.isLocked
+                    let pieces 
+                    state.players[playerId] = {
+                        color: playerColor,
+                        isLocked: isLocked,     
+                        pieces: []
+                    } 
+                    addPlayerPiece({ playerId: playerId, posX: xStart, posY: yStart, currentTile: currentTile })                
+                }                
+
+                function removePlayer(command) {
+                    const playerId = command.playerId                    
+                    delete state.players[playerId]
+                } 
+
+                function addPlayerPiece (command) {
+                    const playerId = command.playerId
+                    const pieceId = ++piecesCount
+                    const posX = command.posX 
+                    const posY = command.posY 
+                    const currentTile = command.currentTile
+                    const color = state.players[playerId].color
+                    var isLocked = state.players[playerId].isLocked
+                    //{ x: 125, y: 85, size: 10, color: "red", isDragging: false, isLocked: false}                     
+                    state.players[playerId].pieces.push({
+                        playerId: playerId,
+                        pieceId: pieceId,
+                        color: color,
+                        isDragging: false,
+                        size: 15,                                                                 
+                        x: posX,
+                        y: posY,                        
+                        isLocked: isLocked,
+                        currentTile: currentTile
+                    })
+                    addPiecesInPlay()
+                }
+
+                function removePlayerPiece(command) {
+                    const playerId = command.playerId
+                    const pieceId = command.pieceId
+                    const pieceToRemove = state.players[playerId].pieces.findIndex(p => p.pieceId == pieceId)
+
+                    let removedPiece = state.players[playerId].pieces.splice(pieceToRemove, 1)
+                    addPiecesInPlay()
+                    return removedPiece
+                } 
+
+                //Update player piece status in state player 
+                function setPieceNewStatus(command) {
+                    const playerId = command.playerId
+                    const pieceId = command.pieceId
+                    const newX = command.posX
+                    const newY = command.poxY
+                    const newTile = command.currentTile
+                    const playerP = state.players[playerId]                    
+                    for (const piece in playerP.pieces) {
+                        const newPositionPiece = playerP.pieces[piece] 
+                        if(newPositionPiece.pieceId == pieceId) {
+                            state.players[playerId].pieces[piece].x = newX
+                            state.players[playerId].pieces[piece].y = newY
+                            state.players[playerId].pieces[piece].currentTile = newTile
+                        }
+                    }
+                    addPiecesInPlay()
+                }
+
+                //Add all players all pieces to piecesInPlay that actually are going to be used in the game
+                function addPiecesInPlay() {
+                    state.piecesInPlay = []                    
+                    const gameState = state
+                    for(const playerId in gameState.players)
+                    {
+                        const playerP = gameState.players[playerId]
+                        for (const piece in playerP.pieces) {
+                            const piceToAdd = playerP.pieces[piece]                            
+                            state.piecesInPlay.push({
+                                playerId: piceToAdd.playerId, 
+                                pieceId: piceToAdd.pieceId,
+                                color: piceToAdd.color,
+                                isDragging: piceToAdd.isDragging,
+                                size: piceToAdd.size,                                                                 
+                                x: piceToAdd.x,
+                                y: piceToAdd.y,                        
+                                isLocked: piceToAdd.isLocked,
+                                currentTile: piceToAdd.currentTile
+                            })
+                        }
+                    }  
+                }
+
+                function addTile(command){
+                    const tileId = command.tileId
+                    const posX = command.posX
+                    const posY = command.posY
+                    const sizeX = command.sizeX
+                    const sizeY = command.sizeY
+                    const color = command.color
+                    
+                    state.tiles.push({
+                        tileId: tileId,
+                        posX: posX,
+                        posY: posY,
+                        sizeX: sizeX,
+                        sizeY: sizeY,
+                        color: color
+                    })
+                }
+
+                function removeTile(command) {
+                    const tileId = command.tileId
+                    delete state.tiles[tileId]
+                }
+
+                return {
+                    addPlayer,                    
+                    removePlayer,
+                    addPlayerPiece,
+                    removePlayerPiece,
+                    addPiecesInPlay, 
+                    addTile,
+                    removeTile,
+                    setPieceNewStatus,          
+                    state                  
+                }
+            }
+
+            const game = creatGame()
+            
+            //Player
+            game.addPlayer({ playerId: "Player1", xStart: 803, yStart: 68, playerColor: 'Red', isLocked: false, currentTile: "MP" })
+            game.addPlayer({ playerId: 'Player2', xStart: 803, yStart: 92, playerColor: 'Blue', isLocked: false, currentTile: "MP" })
+            game.addPlayer({ playerId: 'Player3', xStart: 803, yStart: 116, playerColor: 'DarkOrange', isLocked: false, currentTile: "MP" })
+            game.addPlayer({ playerId: 'Player4', xStart: 803, yStart: 140, playerColor: 'HotPink', isLocked: false, currentTile: "MP" })
+            game.addPlayer({ playerId: 'Player5', xStart: 803, yStart: 164, playerColor: 'DarkOrchid', isLocked: false, currentTile: "MP" })
+            game.addPlayer({ playerId: 'Player6', xStart: 803, yStart: 188, playerColor: 'Teal', isLocked: false, currentTile: "MP" })            
+
+            //Tiles
+            game.addTile({ tileId: "MP", posX: 789, posY: 54, sizeX: 60, sizeY: 460, color: "Lime" })
+            game.addTile({ tileId: "RDM", posX: 620, posY: 135, sizeX: 85, sizeY: 35, color: "Lime" })
+            game.addTile({ tileId: "REM", posX: 620, posY: 205, sizeX: 85, sizeY: 35, color: "Lime" })
+            game.addTile({ tileId: "CI", posX: 485, posY: 220, sizeX: 77, sizeY: 35, color: "Lime" })
+            game.addTile({ tileId: "RiDi", posX: 393, posY: 345, sizeX: 111, sizeY: 97, color: "Lime" })
+            game.addTile({ tileId: "UC", posX: 212, posY: 406, sizeX: 110, sizeY: 35, color: "Lime" })
+            game.addTile({ tileId: "R1", posX: 368, posY: 179, sizeX: 105, sizeY: 17, color: "Lime" })
+            game.addTile({ tileId: "R2", posX: 368, posY: 198, sizeX: 105, sizeY: 17, color: "Lime" })
+            game.addTile({ tileId: "R3", posX: 368, posY: 216, sizeX: 105, sizeY: 17, color: "Lime" })
+            game.addTile({ tileId: "R4", posX: 368, posY: 235, sizeX: 105, sizeY: 17, color: "Lime" })
+            game.addTile({ tileId: "UAL", posX: 133, posY: 98, sizeX: 177, sizeY: 142, color: "Lime" })
+            game.addTile({ tileId: "Monitor", posX: 892, posY: 223, sizeX: 52, sizeY: 44, color: "Lime" })
+            game.addTile({ tileId: "Speaker", posX: 891, posY: 279, sizeX: 57, sizeY: 42, color: "Lime" })
+            game.addTile({ tileId: "Hd", posX: 898, posY: 337, sizeX: 44, sizeY: 49, color: "Lime" })
+            game.addTile({ tileId: "Keyboard", posX: 888, posY: 405, sizeX: 61, sizeY: 33, color: "Lime" })
+            game.addTile({ tileId: "Printer", posX: 895, posY: 450, sizeX: 52, sizeY: 46, color: "Lime" })
+
+
+            //Draw functions
+            //Board objects
+            function drawRectangle(posX, posY, width, height, lineSize, lineColor, fillColor)
+            {
+                context.beginPath()
+                context.lineWidth = lineSize  
+                context.strokeStyle = lineColor
+                context.rect(posX, posY, width, height) //.rect(x, y, width, height)                 
+                context.closePath()
+                context.fillStyle = fillColor
+                //context.fill()                              
+                context.stroke()                
+            }   
+            
+            function drawCircle(posX, posY, size, lineSize, lineColor, fillColor)
+            {
+                context.beginPath()
+                context.lineWidth = lineSize
+                context.strokeStyle = lineColor
+                context.arc(posX, posY, size/2, 0, 2 * Math.PI) // .arc(x, y, radius, startAngle, endAngle, anticlockwise)
+                context.closePath()
+                context.fillStyle = fillColor 
+                context.stroke()
+                context.fill()                
+            }            
+            
+            function drawTriangle(posX, posY, size, lineSize, lineColor, fillColor) 
+            {
+                const x = posX - 5
+                const y = posY + 5
+                let height = size * Math.cos(Math.PI / 6)
+                
+                context.beginPath()
+                context.moveTo(x, y)
+                context.lineTo(x + 10, y)
+                context.lineTo(x + 5, y - height)
+                context.closePath()
+                context.lineWidth = lineSize
+                context.strokeStyle = lineColor
+                context.fillStyle = fillColor
+                context.fill()
+                context.stroke()
+            }
+            
+            //game state 
+            let objDrag = []            
+            let objStatic = []
+            let objSelected = null
+            let objCollided = null
+            objDrag = game.state.piecesInPlay
+            objStatic = game.state.tiles
+
+            
+            //Collision
+            function checkForCollision(selectedPiece, tiles) {
+                if (selectedPiece && tiles){
+                    for (let i = 0; i < tiles.length; i++) {
+                        const tile = tiles[i]
+                        //console.log(`Checking ${selectedPiece.playerId}-${selectedPiece.pieceId} and ${tile.tileId}`)                        
+                        if(selectedPiece.x > tile.posX && selectedPiece.x < tile.posX+tile.sizeX && selectedPiece.y > tile.posY && selectedPiece.y < tile.posY+tile.sizeY) {
+                            //console.log(`COLLISION between ${selectedPiece.playerId}-${selectedPiece.pieceId} and ${tile.tileId}`)                             
+                            return tile
+                            //Fazer animação                          
+                        }
+                    }
+                }                    
+            }
+            //Update game state based on new piece position
+            function updateGameState(){
+                game.setPieceNewStatus({ playerId: objSelected.playerId, pieceId: objSelected.pieceId,
+                        posX: objSelected.x, poxY: objSelected.y, currentTile: objCollided.tileId })
+            }
+
+            // call to draw the scene
+            draw()
+
+            // clear the canvas
+            function clear() {
+                context.clearRect(0, 0, WIDTH, HEIGHT)
+            }
+
+            // redraw the scene
+            function draw() {
+                const img = document.getElementById("boardImage")                
+                clear()                
+                context.drawImage(img, 0, 0)
+                // redraw each statatic object in the objStatic[] array for positioning
+                /* for (let i = 0; i < objStatic.length; i++) {
+                    const os = objStatic[i]
+                    //context.fillStyle = os.color
+                    drawRectangle(os.posX, os.posY, os.sizeX, os.sizeY, os.color, os.color)//posX, posY, width, height, lineSize, lineColor, fillColor                    
+                } */
+                //Highlight objCollided
+                if (objCollided) {
+                   const os = objCollided                  
+                   drawRectangle(os.posX, os.posY, os.sizeX, os.sizeY, os.color, os.color)//posX, posY, width, height, lineSize, lineColor, fillColor 
+                   
+                }
+                // redraw each object in the objDrag[] array
+                for (let i = 0; i < objDrag.length; i++) {
+                    const o = objDrag[i]
+                    //context.fillStyle = o.color
+                    if (o == objSelected) {
+                        drawCircle(o.x, o.y, o.size, o.size/7, 'yellow', o.color) 
+                    }
+                    else {
+                        drawCircle(o.x, o.y, o.size, 0, o.color, o.color) 
+                    }           
+                }
+            }     
+
+            //DRAG mechanics 
+            // drag related variables
+            let dragok = false
+            let startX
+            let startY
+
+            // listen for mouse events
+            canvas.onmousedown = myDown
+            canvas.onmouseup = myUp
+            canvas.onmousemove = myMove
+
+            // handle mousedown events
+            function myDown(e) {  
+                //console.log(`Mouse down, drag ${dragok} and selected obj ${objSelected}`)                         
+                // tell the browser we're handling this mouse event
+                e.preventDefault()
+                e.stopPropagation()                
+                // get the current mouse position
+                let mx = parseInt(e.clientX) // - offsetX)
+                let my = parseInt(e.clientY) // - offsetY)
+                // unselect object
+                objSelected = null
+                objCollided = null
+                // test each obj to see if mouse is inside
+                dragok = false
+                
+                for (let i = 0; i < objDrag.length; i++) {
+                    const o = objDrag[i]
+                    if (mx > o.x && mx < o.x+3 + o.size && my > o.y && my < o.y+3 + o.size) {
+                        // if yes, set that obj isDragging=true
+                        dragok = true
+                        o.isDragging = true
+                        // select object                        
+                        objSelected = o                        
+                    }
+                }
+                // save the current mouse position
+                startX = mx
+                startY = my
+                // redraw the scene with the new object selection
+                draw()
+            }
+            
+            // handle mouseup events
+            function myUp(e) {  
+                //console.log(`Mouse up and drag ${dragok}`)
+                // tell the browser we're handling this mouse event
+                e.preventDefault()
+                e.stopPropagation()
+                // check for collision on mouse up if dragging
+                if(dragok){                    
+                    objCollided = checkForCollision(objSelected, objStatic)
+                    //correção feita de forma errada para acertar a posição das peças no game.state
+                    if(objCollided){
+                        updateGameState()
+                        dragok = false
+                        for (let i = 0; i < objDrag.length; i++) {                    
+                        objDrag[i].isDragging = false                    
+                        } 
+                    }
+                    else{
+                        objCollided = null
+                    }
+                }
+                // clear all the dragging flags **Old
+                /* dragok = false
+                for (let i = 0; i < objDrag.length; i++) {                    
+                    objDrag[i].isDragging = false                    
+                }  */               
+                // redraw the scene
+                draw()
+            }
+
+            // handle mouse moves
+            function myMove(e) {
+                //console.log(`Mouse moving, drag ${dragok}`)
+                // if we're dragging anything...
+                if (dragok && objSelected.pieceId > 6) {
+                    // tell the browser we're handling this mouse event
+                    e.preventDefault()
+                    e.stopPropagation()
+                    // get the current mouse position
+                    const mx = parseInt(e.clientX) // - offsetX)
+                    const my = parseInt(e.clientY) // -offsetY)
+                    // calculate the distance the mouse has moved, since the last mousemove
+                    const dx = mx - startX
+                    const dy = my - startY
+                    // move each object that isDragging by the distance the mouse has moved
+                    // since the last mousemove **Old
+                    /* for (let i = 0; i < objDrag.length; i++) {
+                        const o = objDrag[i]
+                        if (o.isDragging) {
+                            o.x += dx
+                            o.y += dy
+                        }
+                    objCollided = checkForCollision(objSelected, objStatic)                    
+                    // redraw the scene with the new object positions
+                    draw()
+                    } */                    
+                    const o = objSelected
+                    if (o.isDragging) {
+                        o.x += dx
+                        o.y += dy
+                    }
+                    objCollided = checkForCollision(objSelected, objStatic)                    
+                    // redraw the scene with the new object positions
+                    draw()
+                    
+                    // reset the starting mouse position for the next mousemove
+                    startX = mx
+                    startY = my
+                }
+            }
+
+            //Button to add player pice
+            function addPiece(){                
+                if(objSelected)
+                {                  
+                    //Add piece 20px from original
+                    game.addPlayerPiece({ playerId: objSelected.playerId, posX: objSelected.x+20 , posY: objSelected.y })                    
+                    objDrag = game.state.piecesInPlay
+                    objSelected = null
+                    draw()                    
+                }
+            }
+            //Button to remove player pice
+            function removePiece(){                
+                if(objSelected && objSelected.pieceId > 6)
+                {                    
+                    game.removePlayerPiece({ playerId: objSelected.playerId, pieceId: objSelected.pieceId })                    
+                    objDrag = game.state.piecesInPlay
+                    objSelected = null
+                    objCollided = null
+                    draw()                    
+                }
+            }
+        </script>
+    </body>
+</html>
