@@ -33,7 +33,7 @@ export default function Game() {
   return (
     <div className="profile-container">
       <header>        
-        <Link className="button" to="/profile">Voltar</Link>
+        <Link className="button" to="/">Voltar</Link>
         <button onClick={handleLogout} type="button">
           <FiPower size={18} color="#E02041" />
         </button>        

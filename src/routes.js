@@ -5,6 +5,7 @@ import Main from './pages/Main';
 import Game from './pages/Game';
 import CanvasExemple from './pages/CanvasExemple'
 import TicTacToe from './pages/TicTacToe/Game'
+import Snake from './pages/Snake/App'
 
 export default function Routes() {
   return (
@@ -14,6 +15,7 @@ export default function Routes() {
         <Route path="/game/new" component={Game} />
         <Route path="/canvasExemple" component={CanvasExemple} />
         <Route path="/ticTacToe" component={TicTacToe} />
+        <Route path="/snake" component={Snake} />
       </Switch>
     </BrowserRouter>
   );
