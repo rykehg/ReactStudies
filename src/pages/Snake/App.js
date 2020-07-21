@@ -13,7 +13,7 @@ const App = () => {
   const canvasRef = useRef();
   const [snake, setSnake] = useState(SNAKE_START);
   const [apple, setApple] = useState(APPLE_START);
-  const [dir, setDir] = useState([0, -1]);
+  const [dir, setDir] = useState([0, -1]); //direction snake ins moving 
   const [speed, setSpeed] = useState(null);
   const [gameOver, setGameOver] = useState(false);
 
@@ -31,16 +31,15 @@ const App = () => {
     apple.map((_a, i) => Math.floor(Math.random() * (CANVAS_SIZE[i] / SCALE)));
 
   const checkCollision = (piece, snk = snake) => {
-    if (
-      piece[0] * SCALE >= CANVAS_SIZE[0] ||
-      piece[0] < 0 ||
-      piece[1] * SCALE >= CANVAS_SIZE[1] ||
-      piece[1] < 0
-    )
+    if (piece[0] * SCALE >= CANVAS_SIZE[0] || piece[0] < 0 || piece[1] * SCALE >= CANVAS_SIZE[1] || piece[1] < 0)
+    {
       return true;
-
+    }
     for (const segment of snk) {
-      if (piece[0] === segment[0] && piece[1] === segment[1]) return true;
+      if (piece[0] === segment[0] && piece[1] === segment[1]) 
+      {
+        return true;
+      }
     }
     return false;
   };
@@ -58,11 +57,11 @@ const App = () => {
   };
 
   const gameLoop = () => {
-    const snakeCopy = JSON.parse(JSON.stringify(snake));
-    const newSnakeHead = [snakeCopy[0][0] + dir[0], snakeCopy[0][1] + dir[1]];
-    snakeCopy.unshift(newSnakeHead);
-    if (checkCollision(newSnakeHead)) endGame();
-    if (!checkAppleCollision(snakeCopy)) snakeCopy.pop();
+    const snakeCopy = JSON.parse(JSON.stringify(snake)); //copy of multdimessional array of snake[][]
+    const newSnakeHead = [snakeCopy[0][0] + dir[0], snakeCopy[0][1] + dir[1]]; //draw new head according to direction
+    snakeCopy.unshift(newSnakeHead); //new head position
+    if (checkCollision(newSnakeHead)) endGame(); //check for collision before change de state
+    if (!checkAppleCollision(snakeCopy)) snakeCopy.pop(); //as we add a new head we have to remove the tail unless we found a fruit
     setSnake(snakeCopy);
   };
 
@@ -76,7 +75,7 @@ const App = () => {
 
   useEffect(() => {
     const context = canvasRef.current.getContext("2d");
-    context.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+    context.setTransform(SCALE, 0, 0, SCALE, 0, 0); //set the configured scale for every update
     context.clearRect(0, 0, window.innerWidth, window.innerHeight);
     context.fillStyle = "pink";
     snake.forEach(([x, y]) => context.fillRect(x, y, 1, 1));
