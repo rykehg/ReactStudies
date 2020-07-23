@@ -63,7 +63,7 @@ form textarea {
   filter: brightness(90%);
 }
 
-.back-link {
+.project-link {
   display: flex;
   align-items: center;
   margin-top: 40px;
@@ -74,10 +74,10 @@ form textarea {
   transition: opacity 0.2s;
 }
 
-.back-link svg {
+.project-link svg {
   margin-right: 8px;
 }
 
-.back-link:hover {
+.project-link:hover {
   opacity: 0.8;
 }

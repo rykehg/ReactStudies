@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
+//source https://github.com/satansdeer/drawing-react-canvas
+import React, { useRef, useEffect, useState } from 'react'
 
 function App() {
 
@@ -7,18 +8,18 @@ function App() {
     const [isDrawing, setIsDrawing] = useState(false)
   
     useEffect(() => {
-      const canvas = canvasRef.current;
-      canvas.width = window.innerWidth * 2;
-      canvas.height = window.innerHeight * 2;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      const canvas = canvasRef.current
+      canvas.width = window.innerWidth * 2
+      canvas.height = window.innerHeight * 2
+      canvas.style.width = `${window.innerWidth}px`
+      canvas.style.height = `${window.innerHeight}px`
   
       const context = canvas.getContext("2d")
       context.scale(2,2)
       context.lineCap = "round"
       context.strokeStyle = "black"
       context.lineWidth = 5
-      contextRef.current = context;
+      contextRef.current = context
     }, [])
   
     const startDrawing = ({nativeEvent}) => {
@@ -49,7 +50,7 @@ function App() {
         onMouseMove={draw}
         ref={canvasRef}
       />
-    );
+    )
   }
   
-  export default App;
+  export default App
