@@ -27,6 +27,14 @@ export default function Logon() {
             <FaDrawPolygon size={16} color="#E02041" />
             Drawing
           </Link>
+          <Link className="project-link" to="/dragRectangle">
+            <FaDrawPolygon size={16} color="#E02041" />
+            DragRectangle
+          </Link>
+          <Link className="project-link" to="/game/new">
+            <FaDrawPolygon size={16} color="#E02041" />
+            Game
+          </Link>
     </div>
   );
 }

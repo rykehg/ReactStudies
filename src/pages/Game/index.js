@@ -1,160 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useHistory } from 'react-router-dom';
-import { FiPower, FiTrash2 } from 'react-icons/fi';
-import { useCanvas } from './hooks/useCanvas';
-
-import api from '../../services/api';
+import React, { useRef, useEffect } from 'react'
 
 import './styles.css'
+import board from './assets/ProcessadorGameTabuleiro.png'
 
-export default function Game() {
-  const history = useHistory();
-  const userName = localStorage.getItem('userName');
-  let dragok = false
-  let startX
-  let startY
-
-  const [ coordinates, setCoordinates, 
-          objDrag, setObjDrag, 
-          objStatic, setObjStatic, 
-          objSelected, setObjSelected,
-          objCollided, setObjCollided,
-          canvasRef, canvasWidth, canvasHeight  ] = useCanvas();
-          
-  const currentObjDrag = { playerId: "Player1", xStart: 803, yStart: 68, playerColor: 'Red', isLocked: false, currentTile: "MP" }
-
-  const startGame = (event) => {
-    setObjDrag([...objDrag, currentObjDrag])
-}
-  const handleCanvasClick=(event)=>{
-    // on each click get current mouse location 
-    const currentCoord = { x: event.clientX, y: event.clientY };
-    console.log(event)
-    // add the newest mouse location to an array in state 
-    setCoordinates([...coordinates, currentCoord]);
-  };
-
-  const handleCanvasMouseDown=(event)=>{ 
-    //console.log(`Mouse down, drag ${dragok} and selected obj ${objSelected}`)                         
-    // tell the browser we're handling this mouse event
-    event.preventDefault()
-    event.stopPropagation()                
-    // get the current mouse position
-    let mx = parseInt(event.clientX) // - offsetX)
-    let my = parseInt(event.clientY) // - offsetY)
-    // unselect object
-    setObjSelected(objSelected, null)
-    setObjCollided(objCollided, null)
-    // test each obj to see if mouse is inside
-    const objDragOld = objDrag
-    dragok = false    
-    for (let i = 0; i < objDrag.length; i++) {
-        const o = objDrag[i]
-        if (mx > o.x && mx < o.x+3 + o.size && my > o.y && my < o.y+3 + o.size) {
-            // if yes, set that obj isDragging=true
-            dragok = true
-            o.isDragging = true
-            // select object                        
-            setObjSelected(objSelected, o)    
-            setObjDrag(objDragOld, o)                     
-        }
-    }
-    // save the current mouse position
-    startX = mx
-    startY = my
-    //Draw on canvas    
+function App() {
+  const canvas = useRef()
+  let ctx = null
+  const boxes = [
+    { x: 200, y: 220, w: 50, h: 50 },
+    { x: 100, y: 120, w: 50, h: 50 }
+  ]
+  let objDrag = []
+  let objStatic = []
+  let objSelected = null
+  let objCollided = null
+  let isDown = false
+  let dragTarget = null
+  let startX = null
+  let startY = null
+ 
+  // initialize the canvas context
+  useEffect(() => {
+    // dynamically assign the width and height to canvas
+    const canvasEle = canvas.current
+    canvasEle.width = canvasEle.clientWidth
+    canvasEle.height = canvasEle.clientHeight
+ 
+    // get context of the canvas
+    ctx = canvasEle.getContext("2d")
+  }, []);
+ 
+  useEffect(() => {
+    draw()
+  }, [])
+ 
+  // draw rectangle
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.current.clientWidth, canvas.current.clientHeight)
+    const img = document.getElementById("boardImage")
+    ctx.drawImage(img, 0, 0)
+    boxes.map(info => drawRectangle(info))
+    boxes.map(info => drawCircle(info))
+  }
+ 
+  // draw rectangle with background
+  const drawRectangle = (info, style = {}) => {
+    const { x, y, w, h } = info
+    const { backgroundColor = 'black' } = style
+ 
+    ctx.beginPath()
+    ctx.fillStyle = backgroundColor
+    ctx.fillRect(x, y, w, h)
   }
 
-  const handleCanvasMouseMove=(event)=>{
-    //console.log(`Mouse moving, drag ${dragok}`)
-    // if we're dragging anything...
-    if (dragok && objSelected.pieceId > 6) {
-      // tell the browser we're handling this mouse event
-      event.preventDefault()
-      event.stopPropagation()
-      // get the current mouse position
-      const mx = parseInt(event.clientX) // - offsetX)
-      const my = parseInt(event.clientY) // -offsetY)
-      // calculate the distance the mouse has moved, since the last mousemove
-      const dx = mx - startX
-      const dy = my - startY
-      //                   
-      const o = objSelected
-      if (o.isDragging) {
-          o.x += dx
-          o.y += dy
-          setObjSelected(objSelected, o) 
+    // draw rectangle with background
+    const drawCircle = (info, style = {}) => {
+      const { x, y, w, h } = info
+      const { backgroundColor = 'red' } = style
+   
+      ctx.beginPath()
+      ctx.lineWidth = 2
+      ctx.strokeStyle = backgroundColor
+      ctx.fillStyle = backgroundColor 
+      ctx.arc(x+(h/2), y+(h/2), h/2, 0, 2 * Math.PI) // .arc(x, y, radius, startAngle, endAngle, anticlockwise)
+      ctx.closePath()
+      ctx.stroke()
+      ctx.fill()
+    }
+ 
+  // identify the click event in the rectangle
+  const hitBox = (x, y) => {
+    let isTarget = null
+    for (let i = 0; i < boxes.length; i++) {
+      const box = boxes[i]
+      if (x >= box.x && x <= box.x + box.w && y >= box.y && y <= box.y + box.h) {
+        dragTarget = box
+        isTarget = true
+        break
       }
-      //objCollided = checkForCollision(objSelected, objStatic)                    
-      // redraw the scene with the new object positions
-      //draw()
-      
-      // reset the starting mouse position for the next mousemove
-      startX = mx
-      startY = my
     }
+    return isTarget
   }
-  const handleCanvasMouseUp=(event)=>{ 
-    //console.log(`Mouse up and drag ${dragok}`)
-    // tell the browser we're handling this mouse event
-    event.preventDefault()
-    event.stopPropagation()
-    // check for collision on mouse up if dragging
-/*     if(dragok){                    
-        objCollided = checkForCollision(objSelected, objStatic)
-        //correção feita de forma errada para acertar a posição das peças no game.state
-        if(objCollided){
-            updateGameState()
-            dragok = false
-            for (let i = 0; i < objDrag.length; i++) {                    
-            objDrag[i].isDragging = false                    
-            } 
-        }
-        else{
-            objCollided = null
-        }
-    } */
-    // clear all the dragging flags **Old
-    if(dragok)
-    {
-      dragok = false
-      const o = objDrag
-      for (let i = 0; i < o.length; i++) {                    
-          o[i].isDragging = false
-          setObjDrag(objDrag, o) 
-      }      
-    }      
-    // redraw the scene
-    //draw()
+ 
+  const handleMouseDown = e => {
+    startX = parseInt(e.nativeEvent.offsetX - canvas.current.clientLeft);
+    startY = parseInt(e.nativeEvent.offsetY - canvas.current.clientTop);
+    isDown = hitBox(startX, startY)
   }
-
-  function handleLogout() {
-    localStorage.clear();
-
-    history.push('/');
+  
+  const handleMouseMove = e => {
+    if (!isDown) return
+ 
+    const mouseX = parseInt(e.nativeEvent.offsetX - canvas.current.clientLeft);
+    const mouseY = parseInt(e.nativeEvent.offsetY - canvas.current.clientTop);
+    const dx = mouseX - startX
+    const dy = mouseY - startY
+    startX = mouseX
+    startY = mouseY
+    dragTarget.x += dx
+    dragTarget.y += dy
+    draw()
   }
-
+  const handleMouseUp = e => {
+    dragTarget = null
+    isDown = false
+  }
+  const handleMouseOut = e => {
+    handleMouseUp(e)
+  }
+ 
   return (
-    <div className="profile-container">
-      <header>        
-        <Link className="button" to="/profile">Voltar</Link>
-        <button onClick={handleLogout} type="button">
-          <FiPower size={18} color="#E02041" />
-        </button>        
-      </header>
-      <canvas 
-        className="App-canvas"
-        ref={canvasRef}
-        width={canvasWidth}
-        height={canvasHeight}
-        onMouseDown={handleCanvasMouseDown}
-        onMouseMove ={handleCanvasMouseMove}
-        onMouseUp={handleCanvasMouseUp}        
-         />
-
-      <div className="button" >
-        <button onClick={startGame} > CLEAR </button>
-      </div>
+    <div className="App">
+      <img id='boardImage' src={board} alt='tabuleiro' style={{display: 'none'}}/>
+      <canvas
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseOut={handleMouseOut}
+        ref={canvas}></canvas>
     </div>
   );
 }
+ 
+export default App
