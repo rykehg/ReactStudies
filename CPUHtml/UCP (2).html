@@ -135,7 +135,7 @@
                                 currentTile: piceToAdd.currentTile
                             })
                         }
-                    }  
+                    }
                 }
 
                 function addTile(command){
@@ -374,7 +374,7 @@
                         objDrag[i].isDragging = false
                         } 
                     }
-                    else{
+                    else {
                         objCollided = null
                     }
                 }
@@ -442,7 +442,7 @@
             //Button to remove player pice
             function removePiece(){
                 if(objSelected && objSelected.pieceId > 6)
-                {                    
+                {
                     game.removePlayerPiece({ playerId: objSelected.playerId, pieceId: objSelected.pieceId })
                     objDrag = game.state.piecesInPlay
                     objSelected = null

@@ -1,0 +1,21 @@
+Using Bootstrap 4
+Packages to add
+https://react-bootstrap.github.io/getting-started/introduction
+yarn add react-bootstrap bootstrap
+
+Aother way to do style in react
+https://styled-components.com
+yarn add styled-components
+
+
+add in file public/index.html below <link...
+<link
+  rel="stylesheet"
+  href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+  integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+  crossorigin="anonymous"
+/>
+
+tips
+import { Container } from 'react-bootstrap' // pior pq importa toda a biblioteca
+import Container from 'react-bootstrap/Container' //Assim vc importa só oq precisa

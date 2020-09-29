@@ -1,6 +1,6 @@
 
 
-export function creatGame() {
+export default function creatGame() {
   const state = {
       players: { },
       piecesInPlay: [],
