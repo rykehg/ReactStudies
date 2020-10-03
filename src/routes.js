@@ -8,6 +8,7 @@ import TicTacToe from './pages/TicTacToe/Game'
 import Snake from './pages/Snake/App'
 import Drawing from './pages/Drawing/App'
 import DragRectangle from './pages/DragRectangle/App'
+import CardsComponents from './pages/CardsComponents'
 
 export default function Routes() {
   return (
@@ -20,6 +21,7 @@ export default function Routes() {
         <Route path="/snake" component={Snake} />
         <Route path="/drawing" component={Drawing} />
         <Route path="/dragRectangle" component={DragRectangle} />
+        <Route path="/cardsComponents" component={CardsComponents} />
       </Switch>
     </BrowserRouter>
   );

@@ -1,0 +1,17 @@
+.CardsComp {
+  font-family: Arial, Helvetica;
+  font-weight: 300;
+  font-size: 1rem;
+  background-color: #444;
+  color: #fff;
+  text-align: center;
+}
+
+.App {
+  display: flex; /*flex box que encaixa os componentes*/
+  flex-wrap: wrap; /* permite quebra de linha de um flex container*/ 
+}
+
+h1, h2 {
+  font-weight: 500;
+}

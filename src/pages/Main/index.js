@@ -35,6 +35,10 @@ export default function Logon() {
             <FaDrawPolygon size={16} color="#E02041" />
             Game
           </Link>
+          <Link className="project-link" to="/cardsComponents">
+            <FaDrawPolygon size={16} color="#E02041" />
+            CardsComponents
+          </Link>
     </div>
   );
 }
