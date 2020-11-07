@@ -60,7 +60,7 @@ function App() {
       else {
           drawCircle(o.x, o.y, o.size, 0, o.color, o.color) 
       }
-  }
+    }
     //objDrag.map(info => drawTriangle(info))
   }
  
